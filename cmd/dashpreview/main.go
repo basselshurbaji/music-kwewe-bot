@@ -18,7 +18,22 @@ const sampleState = `{
     { "title": "The Rolling Stones - Paint It Black", "added_by": "Dennis", "url": "https://www.youtube.com/watch?v=O4irXQhgMqg" },
     { "title": "AC/DC - Back in Black", "added_by": "Alan", "url": "https://www.youtube.com/watch?v=pAgnJDJN4VA" },
     { "title": "Jimi Hendrix - All Along the Watchtower", "added_by": "Margaret", "url": "https://www.youtube.com/watch?v=TLV4_xaYynY" }
-  ]
+  ],
+  "contributors": [
+    { "name": "Ada", "count": 7 },
+    { "name": "Linus", "count": 5 },
+    { "name": "Grace", "count": 3 },
+    { "name": "Dennis", "count": 2 },
+    { "name": "Margaret", "count": 1 }
+  ],
+  "artists": [
+    { "name": "Led Zeppelin", "count": 4 },
+    { "name": "Queen", "count": 4 },
+    { "name": "Pink Floyd", "count": 3 },
+    { "name": "AC/DC", "count": 2 },
+    { "name": "The Rolling Stones", "count": 1 }
+  ],
+  "played": 18
 }`
 
 func main() {

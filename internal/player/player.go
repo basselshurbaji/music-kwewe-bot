@@ -21,6 +21,10 @@ type Player struct {
 	// Notify, if set, is called on playback state changes so the bot can
 	// message the relevant chat. Safe to leave nil.
 	Notify func(chatID int64, text string)
+
+	// OnPlay, if set, is called once when a track starts playing. Used to feed
+	// session stats. Safe to leave nil.
+	OnPlay func(t queue.Track)
 }
 
 // New returns a Player bound to the given queue.
@@ -53,6 +57,9 @@ func (p *Player) play(ctx context.Context, t queue.Track) {
 
 	log.Printf("now playing: %q (%s)", t.Label(), t.URL)
 	p.notify(t.ChatID, "▶️ Now playing: "+t.Label())
+	if p.OnPlay != nil {
+		p.OnPlay(t)
+	}
 
 	// mpv plays YouTube/YouTube Music URLs directly (it shells out to yt-dlp).
 	// --no-video: audio only. --no-terminal: don't grab our stdin.

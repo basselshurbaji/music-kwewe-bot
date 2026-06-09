@@ -17,6 +17,7 @@ import (
 	"music-queue/internal/dotenv"
 	"music-queue/internal/player"
 	"music-queue/internal/queue"
+	"music-queue/internal/stats"
 	"music-queue/internal/web"
 )
 
@@ -32,6 +33,10 @@ func main() {
 
 	q := queue.New()
 	p := player.New(q)
+
+	// Session stats: tally each track as it starts playing.
+	st := stats.New()
+	p.OnPlay = func(t queue.Track) { st.Record(t.AddedBy, t.Artist) }
 
 	b, err := bot.New(token, q, p)
 	if err != nil {
@@ -50,7 +55,7 @@ func main() {
 	if addr == "" {
 		addr = ":7070"
 	}
-	srv := &http.Server{Addr: addr, Handler: web.New(q, p).Handler()}
+	srv := &http.Server{Addr: addr, Handler: web.New(q, p, st).Handler()}
 	go func() {
 		log.Printf("dashboard on http://localhost%s", port(addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

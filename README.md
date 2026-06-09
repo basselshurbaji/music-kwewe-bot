@@ -14,7 +14,8 @@ It's a tiny Go service: a Telegram bot up front, a queue in the middle, and
 
 ![dashboard](assets/dashboard.png)
 
-*(the read-only dashboard — what's spinning right now and who queued what)*
+*(the read-only dashboard — what's spinning now, who queued what, plus the
+session's top DJs and most-played artists)*
 
 ## The vibe
 

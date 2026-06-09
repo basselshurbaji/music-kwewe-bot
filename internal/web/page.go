@@ -73,6 +73,17 @@ const indexHTML = `<!DOCTYPE html>
   .row .t { color: var(--fg); }
   a { color: inherit; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px; }
+  @media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
+  ul.chart { list-style: none; margin: 0; padding: 0; }
+  ul.chart li {
+    display: grid; grid-template-columns: 1.4em 1fr auto;
+    align-items: baseline; gap: 8px; padding: 2px 0;
+  }
+  ul.chart .rank { color: var(--amber); text-align: right; }
+  ul.chart .who { color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul.chart .bar { color: var(--accent); letter-spacing: -1px; }
+  ul.chart .n { color: var(--dim); }
   .foot {
     margin-top: 20px; padding-top: 10px;
     border-top: 1px solid var(--border);
@@ -108,8 +119,25 @@ const indexHTML = `<!DOCTYPE html>
         <div id="queue-empty" class="idle" style="display:none">queue is empty</div>
       </div>
 
+      <div class="section">
+        <h2>~/.stats &#8212; session</h2>
+        <div class="stats">
+          <div>
+            <h2>&#9733; top djs</h2>
+            <ul class="chart" id="djs"></ul>
+            <div id="djs-empty" class="idle">no plays yet</div>
+          </div>
+          <div>
+            <h2>&#9836; session artists</h2>
+            <ul class="chart" id="artists"></ul>
+            <div id="artists-empty" class="idle">no plays yet</div>
+          </div>
+        </div>
+      </div>
+
       <div class="foot">
         <span id="count">tracks: 0</span>
+        <span id="played">played: 0</span>
         <span id="updated">updated: --:--:--</span>
       </div>
     </div>
@@ -121,7 +149,12 @@ const indexHTML = `<!DOCTYPE html>
   var queueEl = document.getElementById("queue");
   var emptyEl = document.getElementById("queue-empty");
   var countEl = document.getElementById("count");
+  var playedEl = document.getElementById("played");
   var updatedEl = document.getElementById("updated");
+  var djsEl = document.getElementById("djs");
+  var djsEmptyEl = document.getElementById("djs-empty");
+  var artistsEl = document.getElementById("artists");
+  var artistsEmptyEl = document.getElementById("artists-empty");
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -173,6 +206,37 @@ const indexHTML = `<!DOCTYPE html>
     }
   }
 
+  function renderChart(listEl, emptyEl, rows) {
+    listEl.innerHTML = "";
+    if (!rows || rows.length === 0) {
+      emptyEl.style.display = "block";
+      return;
+    }
+    emptyEl.style.display = "none";
+    var max = 0;
+    for (var i = 0; i < rows.length; i++) { if (rows[i].count > max) max = rows[i].count; }
+    for (var j = 0; j < rows.length; j++) {
+      var row = rows[j];
+      var li = el("li");
+      li.appendChild(el("span", "rank", "#" + (j + 1)));
+      var who = el("span", "who", row.name);
+      who.title = row.name;
+      li.appendChild(who);
+      var width = max > 0 ? Math.round((row.count / max) * 10) : 0;
+      var bar = max > 0 && width < 1 ? 1 : width;
+      var meter = el("span", "bar", repeat(String.fromCharCode(9608), bar));
+      meter.appendChild(el("span", "n", " " + row.count));
+      li.appendChild(meter);
+      listEl.appendChild(li);
+    }
+  }
+
+  function repeat(ch, n) {
+    var s = "";
+    for (var i = 0; i < n; i++) s += ch;
+    return s;
+  }
+
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function stamp() {
     var d = new Date();
@@ -185,9 +249,12 @@ const indexHTML = `<!DOCTYPE html>
       .then(function (s) {
         renderNow(s.now_playing);
         renderQueue(s.queue);
+        renderChart(djsEl, djsEmptyEl, s.contributors);
+        renderChart(artistsEl, artistsEmptyEl, s.artists);
         var total = (s.queue ? s.queue.length : 0) + (s.now_playing ? 1 : 0);
         countEl.textContent = "tracks: " + total;
         countEl.className = "";
+        playedEl.textContent = "played: " + (s.played || 0);
         updatedEl.textContent = "updated: " + stamp();
       })
       .catch(function () {

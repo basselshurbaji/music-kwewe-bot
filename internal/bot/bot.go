@@ -119,8 +119,8 @@ func (b *Bot) handleCommand(msg *tgbotapi.Message) {
 func (b *Bot) enqueue(msg *tgbotapi.Message, link string) {
 	addedBy := userName(msg.From)
 
-	title := ytinfo.Title(link) // best-effort; empty falls back to URL
-	t := queue.Track{URL: link, Title: title, AddedBy: addedBy, ChatID: msg.Chat.ID}
+	meta := ytinfo.Lookup(link) // best-effort; empty title falls back to URL
+	t := queue.Track{URL: link, Title: meta.Title, Artist: meta.Artist, AddedBy: addedBy, ChatID: msg.Chat.ID}
 	b.q.Add(t)
 
 	ahead := b.q.Len() - 1

@@ -7,6 +7,7 @@ import "sync"
 type Track struct {
 	URL     string
 	Title   string
+	Artist  string // uploading channel / artist, best-effort (for session stats)
 	AddedBy string // Telegram display name of whoever queued it
 	ChatID  int64  // chat the track was requested from (for notifications)
 }

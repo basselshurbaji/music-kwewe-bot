@@ -8,17 +8,19 @@ import (
 
 	"music-queue/internal/player"
 	"music-queue/internal/queue"
+	"music-queue/internal/stats"
 )
 
-// Server exposes the queue and player state over HTTP.
+// Server exposes the queue, player, and session stats over HTTP.
 type Server struct {
-	q *queue.Queue
-	p *player.Player
+	q  *queue.Queue
+	p  *player.Player
+	st *stats.Stats
 }
 
-// New returns a dashboard server bound to the given queue and player.
-func New(q *queue.Queue, p *player.Player) *Server {
-	return &Server{q: q, p: p}
+// New returns a dashboard server bound to the given queue, player, and stats.
+func New(q *queue.Queue, p *player.Player, st *stats.Stats) *Server {
+	return &Server{q: q, p: p, st: st}
 }
 
 // Page returns the dashboard HTML. Exposed so tooling (e.g. a seeded preview)
@@ -40,17 +42,25 @@ type trackView struct {
 }
 
 type stateView struct {
-	NowPlaying *trackView  `json:"now_playing"`
-	Queue      []trackView `json:"queue"`
+	NowPlaying   *trackView   `json:"now_playing"`
+	Queue        []trackView  `json:"queue"`
+	Contributors []stats.Stat `json:"contributors"`
+	Artists      []stats.Stat `json:"artists"`
+	Played       int          `json:"played"`
 }
 
 func (s *Server) state(w http.ResponseWriter, _ *http.Request) {
-	view := stateView{Queue: []trackView{}}
+	view := stateView{Queue: []trackView{}, Contributors: []stats.Stat{}, Artists: []stats.Stat{}}
 	if cur := s.p.Current(); cur != nil {
 		view.NowPlaying = &trackView{Title: cur.Label(), AddedBy: cur.AddedBy, URL: cur.URL}
 	}
 	for _, t := range s.q.List() {
 		view.Queue = append(view.Queue, trackView{Title: t.Label(), AddedBy: t.AddedBy, URL: t.URL})
+	}
+	if s.st != nil {
+		view.Contributors = s.st.TopContributors(8)
+		view.Artists = s.st.TopArtists(8)
+		view.Played = s.st.Played()
 	}
 
 	w.Header().Set("Content-Type", "application/json")
