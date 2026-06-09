@@ -21,6 +21,10 @@ func New(q *queue.Queue, p *player.Player) *Server {
 	return &Server{q: q, p: p}
 }
 
+// Page returns the dashboard HTML. Exposed so tooling (e.g. a seeded preview)
+// can reuse the exact page the server serves.
+func Page() string { return indexHTML }
+
 // Handler returns the HTTP routes: "/" (dashboard) and "/api/state" (JSON).
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
