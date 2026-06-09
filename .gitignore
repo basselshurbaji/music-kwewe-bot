@@ -1,0 +1,7 @@
+/music-queue
+*.exe
+.env
+
+# IDE / local tooling
+.idea/
+.claude/settings.local.json
