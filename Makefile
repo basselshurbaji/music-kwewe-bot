@@ -1,4 +1,4 @@
-.PHONY: setup run build test clean check-deps
+.PHONY: setup run build test clean check-deps dashboard
 
 # Install Homebrew dependencies and create a local .env from the template.
 setup:
@@ -39,6 +39,10 @@ build:
 # Run tests.
 test:
 	@go test ./...
+
+# Open the terminal dashboard (requires the bot to be running via make run).
+dashboard:
+	@go run ./cmd/dashboard
 
 # Remove build artifacts.
 clean:
