@@ -13,8 +13,9 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/joho/godotenv"
+
 	"music-kwewe/internal/bot"
-	"music-kwewe/internal/dotenv"
 	"music-kwewe/internal/player"
 	"music-kwewe/internal/queue"
 	"music-kwewe/internal/stats"
@@ -22,7 +23,7 @@ import (
 )
 
 func main() {
-	if err := dotenv.Load(".env"); err != nil {
+	if err := godotenv.Load(".env"); err != nil && !os.IsNotExist(err) {
 		log.Fatalf("loading .env: %v", err)
 	}
 
