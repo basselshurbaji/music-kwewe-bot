@@ -28,9 +28,10 @@ type Bot struct {
 	authorized map[int64]bool
 }
 
-// New creates a Bot from a token and an optional passphrase. It also wires
-// player notifications back to Telegram so playback updates are pushed to the
-// requesting chat.
+// New creates a Bot from a token and an optional passphrase. When passphrase is
+// non-empty, chats must send it before the bot responds. When empty, the bot is
+// public. It also wires player notifications back to Telegram so playback
+// updates are pushed to the requesting chat.
 func New(token, passphrase string, q *queue.Queue, p *player.Player) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
@@ -85,21 +86,16 @@ func (b *Bot) isAuthorized(chatID int64) bool {
 func (b *Bot) handle(msg *tgbotapi.Message) {
 	log.Printf("request: chat=%d from=%q text=%q", msg.Chat.ID, userName(msg.From), msg.Text)
 
-	if b.passphrase != "" {
-		if !b.isAuthorized(msg.Chat.ID) {
-			if strings.TrimSpace(msg.Text) == b.passphrase {
-				b.mu.Lock()
-				b.authorized[msg.Chat.ID] = true
-				b.mu.Unlock()
-				log.Printf("auth: chat %d authorized", msg.Chat.ID)
-				b.reply(msg.Chat.ID, "✅ Access granted! "+helpText)
-			} else {
-				b.reply(msg.Chat.ID, "🔒 This bot is private. Send the passphrase to get access.")
-			}
-			return
+	if b.passphrase != "" && !b.isAuthorized(msg.Chat.ID) {
+		if strings.TrimSpace(msg.Text) == b.passphrase {
+			b.mu.Lock()
+			b.authorized[msg.Chat.ID] = true
+			b.mu.Unlock()
+			log.Printf("auth: chat %d authorized", msg.Chat.ID)
+			b.reply(msg.Chat.ID, "✅ Access granted! "+helpText)
+		} else {
+			b.reply(msg.Chat.ID, "🔒 This bot is private. Send the passphrase to get access.")
 		}
-	} else {
-		b.reply(msg.Chat.ID, "🔒 This bot is private. Contact the owner for access.")
 		return
 	}
 
