@@ -32,16 +32,9 @@ func New(q *queue.Queue) *Player {
 	return &Player{q: q}
 }
 
-// Run blocks forever, playing queued tracks one after another. Call it in a
-// goroutine. It stops when ctx is cancelled.
+// Run blocks forever, playing queued tracks one after another.
 func (p *Player) Run(ctx context.Context) {
 	for {
-		// queue.Next blocks; bail out if we're shutting down.
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
 		t := p.q.Next()
 		p.play(ctx, t)
 	}
