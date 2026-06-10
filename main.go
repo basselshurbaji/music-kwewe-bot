@@ -38,7 +38,9 @@ func main() {
 	st := stats.New()
 	p.OnPlay = func(t queue.Track) { st.Record(t.AddedBy, t.Artist) }
 
-	b, err := bot.New(token, q, p)
+	passphrase := os.Getenv("BOT_PASSPHRASE")
+
+	b, err := bot.New(token, passphrase, q, p)
 	if err != nil {
 		log.Fatalf("init bot: %v", err)
 	}

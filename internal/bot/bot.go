@@ -6,6 +6,7 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
@@ -19,19 +20,23 @@ var ytURL = regexp.MustCompile(`https?://(?:www\.|music\.|m\.)?(?:youtube\.com/\
 
 // Bot couples the Telegram API client with the queue and player.
 type Bot struct {
-	api    *tgbotapi.BotAPI
-	q      *queue.Queue
-	player *player.Player
+	api        *tgbotapi.BotAPI
+	q          *queue.Queue
+	player     *player.Player
+	passphrase string
+	mu         sync.RWMutex
+	authorized map[int64]bool
 }
 
-// New creates a Bot from a token. It also wires player notifications back to
-// Telegram so playback updates are pushed to the requesting chat.
-func New(token string, q *queue.Queue, p *player.Player) (*Bot, error) {
+// New creates a Bot from a token and an optional passphrase. It also wires
+// player notifications back to Telegram so playback updates are pushed to the
+// requesting chat.
+func New(token, passphrase string, q *queue.Queue, p *player.Player) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
-	b := &Bot{api: api, q: q, player: p}
+	b := &Bot{api: api, q: q, player: p, passphrase: passphrase, authorized: map[int64]bool{}}
 
 	p.Notify = func(chatID int64, text string) {
 		if _, err := api.Send(tgbotapi.NewMessage(chatID, text)); err != nil {
@@ -71,8 +76,32 @@ func (b *Bot) Run() {
 	}
 }
 
+func (b *Bot) isAuthorized(chatID int64) bool {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.authorized[chatID]
+}
+
 func (b *Bot) handle(msg *tgbotapi.Message) {
 	log.Printf("request: chat=%d from=%q text=%q", msg.Chat.ID, userName(msg.From), msg.Text)
+
+	if b.passphrase != "" {
+		if !b.isAuthorized(msg.Chat.ID) {
+			if strings.TrimSpace(msg.Text) == b.passphrase {
+				b.mu.Lock()
+				b.authorized[msg.Chat.ID] = true
+				b.mu.Unlock()
+				log.Printf("auth: chat %d authorized", msg.Chat.ID)
+				b.reply(msg.Chat.ID, "✅ Access granted! "+helpText)
+			} else {
+				b.reply(msg.Chat.ID, "🔒 This bot is private. Send the passphrase to get access.")
+			}
+			return
+		}
+	} else {
+		b.reply(msg.Chat.ID, "🔒 This bot is private. Contact the owner for access.")
+		return
+	}
 
 	if msg.IsCommand() {
 		b.handleCommand(msg)
