@@ -79,6 +79,13 @@ make run
 The dashboard pops open at <http://localhost:7070>. Add the bot to your group
 chat, start pasting links, and you're off.
 
+Prefer to stay in the terminal? Open the TUI version in a second terminal — same
+layout, rendered right in your shell:
+
+```sh
+make dashboard
+```
+
 > `.env` is loaded automatically and is gitignored. A real environment variable
 > wins over the `.env` value if both are set. Change the dashboard port with
 > `DASHBOARD_ADDR` (e.g. `DASHBOARD_ADDR=:9000`).
@@ -89,6 +96,7 @@ chat, start pasting links, and you're off.
 |---|---|
 | `make setup` | Install Homebrew deps + create `.env` from template |
 | `make run`   | Run the service (`go run .`) |
+| `make dashboard` | Open the terminal dashboard (needs the bot running) |
 | `make build` | Build the `music-kwewe` binary |
 | `make test`  | Run tests |
 | `make clean` | Remove the built binary |
