@@ -1,4 +1,4 @@
-// Command music-queue runs a Telegram bot that queues YouTube Music links and
+// Command music-kwewe runs a Telegram bot that queues YouTube Music links and
 // plays them in order via mpv.
 package main
 
@@ -13,12 +13,12 @@ import (
 	"strings"
 	"syscall"
 
-	"music-queue/internal/bot"
-	"music-queue/internal/dotenv"
-	"music-queue/internal/player"
-	"music-queue/internal/queue"
-	"music-queue/internal/stats"
-	"music-queue/internal/web"
+	"music-kwewe/internal/bot"
+	"music-kwewe/internal/dotenv"
+	"music-kwewe/internal/player"
+	"music-kwewe/internal/queue"
+	"music-kwewe/internal/stats"
+	"music-kwewe/internal/web"
 )
 
 func main() {

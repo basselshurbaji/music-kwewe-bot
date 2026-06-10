@@ -1,4 +1,4 @@
-module music-queue
+module music-kwewe
 
 go 1.26
 

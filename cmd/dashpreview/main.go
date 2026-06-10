@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"music-queue/internal/web"
+	"music-kwewe/internal/web"
 )
 
 const sampleState = `{

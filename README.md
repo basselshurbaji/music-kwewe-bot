@@ -89,7 +89,7 @@ chat, start pasting links, and you're off.
 |---|---|
 | `make setup` | Install Homebrew deps + create `.env` from template |
 | `make run`   | Run the service (`go run .`) |
-| `make build` | Build the `music-queue` binary |
+| `make build` | Build the `music-kwewe` binary |
 | `make test`  | Run tests |
 | `make clean` | Remove the built binary |
 

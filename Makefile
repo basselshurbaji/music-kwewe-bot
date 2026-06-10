@@ -34,7 +34,7 @@ run: check-deps
 
 # Build a standalone binary.
 build:
-	@go build -o music-queue .
+	@go build -o music-kwewe .
 
 # Run tests.
 test:
@@ -42,4 +42,4 @@ test:
 
 # Remove build artifacts.
 clean:
-	@rm -f music-queue
+	@rm -f music-kwewe

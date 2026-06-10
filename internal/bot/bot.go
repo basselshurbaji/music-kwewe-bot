@@ -10,9 +10,9 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-	"music-queue/internal/player"
-	"music-queue/internal/queue"
-	"music-queue/internal/ytinfo"
+	"music-kwewe/internal/player"
+	"music-kwewe/internal/queue"
+	"music-kwewe/internal/ytinfo"
 )
 
 // ytURL matches youtube.com, music.youtube.com, and youtu.be links.

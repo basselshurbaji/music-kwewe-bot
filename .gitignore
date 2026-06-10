@@ -1,7 +1,10 @@
-/music-queue
+/music-kwewe
 *.exe
 .env
 
 # IDE / local tooling
 .idea/
 .claude/settings.local.json
+
+# Dependencies
+vendor/

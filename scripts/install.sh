@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the Homebrew dependencies needed to run music-queue.
+# Install the Homebrew dependencies needed to run music-kwewe.
 set -euo pipefail
 
 if ! command -v brew >/dev/null 2>&1; then

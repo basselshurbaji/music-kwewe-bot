@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"music-queue/internal/player"
-	"music-queue/internal/queue"
-	"music-queue/internal/stats"
+	"music-kwewe/internal/player"
+	"music-kwewe/internal/queue"
+	"music-kwewe/internal/stats"
 )
 
 func newServer() *Server {

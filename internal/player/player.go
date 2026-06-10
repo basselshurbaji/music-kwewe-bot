@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"sync"
 
-	"music-queue/internal/queue"
+	"music-kwewe/internal/queue"
 )
 
 // Player plays one track at a time, in order, from a queue.
