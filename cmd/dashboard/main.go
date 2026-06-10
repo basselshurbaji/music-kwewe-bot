@@ -35,17 +35,9 @@ var (
 	stAmber  = lipgloss.NewStyle().Foreground(colAmber)
 	stFg     = lipgloss.NewStyle().Foreground(colFg)
 	stRed    = lipgloss.NewStyle().Foreground(colRed)
-	stBold   = lipgloss.NewStyle().Foreground(colAccent).Bold(true)
-
 	stBox = lipgloss.NewStyle().
-		Background(colBg).
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(colBorder)
-
-	stTitleBar = lipgloss.NewStyle().
-			Background(lipgloss.Color("#0e141d")).
-			Foreground(colDim).
-			PaddingLeft(1).PaddingRight(1)
 
 	stScreen = lipgloss.NewStyle().
 			PaddingLeft(2).PaddingRight(2).
@@ -167,25 +159,6 @@ func (m model) View() string {
 		innerWidth = 40
 	}
 
-	// Title bar
-	dots := "● ● ●"
-	title := stDim.Render("  music-kwewe-bot — dashboard (read-only)")
-	titleBar := stTitleBar.Width(innerWidth).Render(
-		lipgloss.JoinHorizontal(lipgloss.Left,
-			lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5f56")).Render("●"),
-			" ",
-			lipgloss.NewStyle().Foreground(lipgloss.Color("#ffbd2e")).Render("●"),
-			" ",
-			lipgloss.NewStyle().Foreground(lipgloss.Color("#27c93f")).Render("●"),
-			stDim.Render("  music-kwewe-bot — dashboard (read-only)"),
-		),
-	)
-	_ = dots
-	_ = title
-
-	// Prompt line
-	prompt := stDim.Render("music-kwewe-bot") + stDim.Render(" ~ $ ") + stBold.Render("status") + stAccent.Render("█")
-
 	// Now playing
 	nowHeading := stHeading.Render("▶ NOW PLAYING")
 	var nowBody string
@@ -260,16 +233,13 @@ func (m model) View() string {
 
 	// Assemble screen content
 	screen := stScreen.Width(innerWidth).Render(
-		prompt + "\n" +
-			nowSection + "\n" +
+		nowSection + "\n" +
 			queueSection + "\n" +
 			statsSection + "\n" +
 			footer,
 	)
 
-	// Outer box
-	content := lipgloss.JoinVertical(lipgloss.Left, titleBar, screen)
-	box := stBox.Width(innerWidth + 2).Render(content)
+	box := stBox.Width(innerWidth + 2).Render(screen)
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, box)
 }
