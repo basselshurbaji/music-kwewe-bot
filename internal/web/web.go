@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	qrc "github.com/skip2/go-qrcode"
+
 	"music-kwewe/internal/player"
 	"music-kwewe/internal/queue"
 	"music-kwewe/internal/stats"
@@ -13,25 +15,30 @@ import (
 
 // Server exposes the queue, player, and session stats over HTTP.
 type Server struct {
-	q  *queue.Queue
-	p  *player.Player
-	st *stats.Stats
+	q          *queue.Queue
+	p          *player.Player
+	st         *stats.Stats
+	botLink    string
+	passphrase string
 }
 
 // New returns a dashboard server bound to the given queue, player, and stats.
-func New(q *queue.Queue, p *player.Player, st *stats.Stats) *Server {
-	return &Server{q: q, p: p, st: st}
+// botLink and passphrase are surfaced via /api/invite and /qr.
+func New(q *queue.Queue, p *player.Player, st *stats.Stats, botLink, passphrase string) *Server {
+	return &Server{q: q, p: p, st: st, botLink: botLink, passphrase: passphrase}
 }
 
 // Page returns the dashboard HTML. Exposed so tooling (e.g. a seeded preview)
 // can reuse the exact page the server serves.
 func Page() string { return indexHTML }
 
-// Handler returns the HTTP routes: "/" (dashboard) and "/api/state" (JSON).
+// Handler returns the HTTP routes.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.index)
 	mux.HandleFunc("/api/state", s.state)
+	mux.HandleFunc("/api/invite", s.invite)
+	mux.HandleFunc("/qr", s.qr)
 	return mux
 }
 
@@ -58,8 +65,8 @@ func (s *Server) state(w http.ResponseWriter, _ *http.Request) {
 		view.Queue = append(view.Queue, trackView{Title: t.Label(), AddedBy: t.AddedBy, URL: t.URL})
 	}
 	if s.st != nil {
-		view.Contributors = s.st.TopContributors(8)
-		view.Artists = s.st.TopArtists(8)
+		view.Contributors = s.st.TopContributors(5)
+		view.Artists = s.st.TopArtists(5)
 		view.Played = s.st.Played()
 	}
 
@@ -74,5 +81,32 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
 	_, _ = w.Write([]byte(indexHTML))
+}
+
+type inviteView struct {
+	BotLink    string `json:"bot_link"`
+	Passphrase string `json:"passphrase"`
+}
+
+func (s *Server) invite(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	_ = json.NewEncoder(w).Encode(inviteView{BotLink: s.botLink, Passphrase: s.passphrase})
+}
+
+func (s *Server) qr(w http.ResponseWriter, r *http.Request) {
+	if s.botLink == "" {
+		http.NotFound(w, r)
+		return
+	}
+	png, err := qrc.Encode(s.botLink, qrc.Medium, 256)
+	if err != nil {
+		http.Error(w, "could not generate QR", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	_, _ = w.Write(png)
 }

@@ -97,6 +97,24 @@ const indexHTML = `<!DOCTYPE html>
   }
   @keyframes blink { 50% { opacity: 0; } }
   .err { color: var(--red); }
+  .invite {
+    position: fixed; top: 28px; right: 16px; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    width: 135px; padding: 11px;
+    background: #0c1119; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    opacity: .55; transition: opacity .2s ease;
+  }
+  .invite:hover { opacity: 1; }
+  .qr-img {
+    width: 100px; height: 100px; flex-shrink: 0; display: none;
+    image-rendering: pixelated;
+    background: #fff; padding: 0; border-radius: 3px;
+  }
+  .invite-meta { font-size: 12px; color: var(--dim); line-height: 1.5; text-align: center; }
+  .invite-meta .k { display: block; text-transform: uppercase; letter-spacing: .1em; }
+  .inv-pass { color: var(--accent); word-break: break-word; }
+  .invite-meta .hint { color: var(--dim); }
 </style>
 </head>
 <body>
@@ -140,6 +158,15 @@ const indexHTML = `<!DOCTYPE html>
         <span id="played">played: 0</span>
         <span id="updated">updated: --:--:--</span>
       </div>
+    </div>
+  </div>
+
+  <div class="invite" id="invite-section" style="display:none">
+    <a id="qr-link" href="#" target="_blank" rel="noopener" title="Open bot in Telegram">
+      <img id="qr-img" class="qr-img" src="/qr" alt="Scan to join">
+    </a>
+    <div class="invite-meta">
+      <div><span class="k">pass</span><span id="inv-pass" class="inv-pass"></span></div>
     </div>
   </div>
 
@@ -265,6 +292,23 @@ const indexHTML = `<!DOCTYPE html>
 
   refresh();
   setInterval(refresh, 2000);
+
+  fetch("/api/invite", {cache: "no-store"})
+    .then(function(r) { return r.json(); })
+    .then(function(inv) {
+      if (!inv.passphrase && !inv.bot_link) return;
+      document.getElementById("invite-section").style.display = "";
+      if (inv.passphrase) {
+        document.getElementById("inv-pass").textContent = inv.passphrase;
+      }
+      if (inv.bot_link) {
+        document.getElementById("qr-link").href = inv.bot_link;
+        var img = document.getElementById("qr-img");
+        img.style.display = "block";
+        img.onerror = function() { img.style.display = "none"; };
+      }
+    })
+    .catch(function() {});
 })();
 </script>
 </body>

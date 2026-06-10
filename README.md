@@ -90,6 +90,18 @@ make dashboard
 > wins over the `.env` value if both are set. Change the dashboard port with
 > `DASHBOARD_ADDR` (e.g. `DASHBOARD_ADDR=:9000`).
 
+### Getting in (the passphrase)
+
+The bot is private — a new chat has to send the **passphrase** before the bot
+does anything. Set one with `BOT_PASSPHRASE`, or leave it blank and the bot
+generates a goofy one at startup (like `cursed kwewe yodels`) and prints it to
+the log.
+
+The dashboard shows a **scannable QR code** in the corner that opens the bot in
+Telegram — friends scan it, then send the passphrase shown beside it to get in.
+The bot link is derived automatically from your token, so there's nothing to
+configure.
+
 ### Make targets
 
 | Command | Does |

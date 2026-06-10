@@ -65,6 +65,11 @@ type trackView struct {
 	URL     string `json:"url"`
 }
 
+type inviteView struct {
+	BotLink    string `json:"bot_link"`
+	Passphrase string `json:"passphrase"`
+}
+
 type statView struct {
 	Name  string `json:"name"`
 	Count int    `json:"count"`
@@ -81,14 +86,16 @@ type stateView struct {
 // ── messages ──────────────────────────────────────────────────────────────────
 
 type stateMsg stateView
+type inviteMsg inviteView
 type errMsg struct{ err error }
 type tickMsg time.Time
 
 // ── model ─────────────────────────────────────────────────────────────────────
 
 type model struct {
-	apiURL  string
+	baseURL string
 	state   stateView
+	invite  inviteView
 	err     error
 	updated time.Time
 	width   int
@@ -104,11 +111,11 @@ func newModel() model {
 	if i := strings.LastIndex(addr, ":"); i >= 0 {
 		port = addr[i:]
 	}
-	return model{apiURL: "http://localhost" + port + "/api/state"}
+	return model{baseURL: "http://localhost" + port}
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(fetchCmd(m.apiURL), tickCmd())
+	return tea.Batch(fetchCmd(m.baseURL+"/api/state"), fetchInviteCmd(m.baseURL+"/api/invite"), tickCmd())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -117,7 +124,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 	case tickMsg:
-		return m, tea.Batch(fetchCmd(m.apiURL), tickCmd())
+		return m, tea.Batch(fetchCmd(m.baseURL+"/api/state"), tickCmd())
+	case inviteMsg:
+		m.invite = inviteView(msg)
 	case stateMsg:
 		m.state = stateView(msg)
 		m.err = nil
@@ -151,12 +160,40 @@ func fetchCmd(url string) tea.Cmd {
 	}
 }
 
+func fetchInviteCmd(url string) tea.Cmd {
+	return func() tea.Msg {
+		resp, err := http.Get(url) //nolint:noctx
+		if err != nil {
+			return nil
+		}
+		defer resp.Body.Close()
+		var inv inviteView
+		if err := json.NewDecoder(resp.Body).Decode(&inv); err != nil {
+			return nil
+		}
+		return inviteMsg(inv)
+	}
+}
+
 // ── view ──────────────────────────────────────────────────────────────────────
 
 func (m model) View() string {
 	innerWidth := m.width - 4 // 2 box border + 2 padding each side
 	if innerWidth < 40 {
 		innerWidth = 40
+	}
+
+	// Bot access (only when invite info is available)
+	var accessSection string
+	if m.invite.BotLink != "" || m.invite.Passphrase != "" {
+		var lines []string
+		if m.invite.BotLink != "" {
+			lines = append(lines, stDim.Render("link: ")+stFg.Render(m.invite.BotLink))
+		}
+		if m.invite.Passphrase != "" {
+			lines = append(lines, stDim.Render("pass: ")+stAccent.Render(m.invite.Passphrase))
+		}
+		accessSection = stSection.Render(stHeading.Render("⌘ BOT ACCESS") + "\n" + strings.Join(lines, "\n"))
 	}
 
 	// Now playing
@@ -232,12 +269,11 @@ func (m model) View() string {
 	)
 
 	// Assemble screen content
-	screen := stScreen.Width(innerWidth).Render(
-		nowSection + "\n" +
-			queueSection + "\n" +
-			statsSection + "\n" +
-			footer,
-	)
+	body := nowSection + "\n" + queueSection + "\n" + statsSection + "\n" + footer
+	if accessSection != "" {
+		body = accessSection + "\n" + body
+	}
+	screen := stScreen.Width(innerWidth).Render(body)
 
 	box := stBox.Width(innerWidth + 2).Render(screen)
 

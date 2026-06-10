@@ -40,6 +40,10 @@ func main() {
 	p.OnPlay = func(t queue.Track) { st.Record(t.AddedBy, t.Artist) }
 
 	passphrase := os.Getenv("BOT_PASSPHRASE")
+	if passphrase == "" {
+		passphrase = bot.Generate()
+		log.Printf("no BOT_PASSPHRASE set — generated passphrase: %q", passphrase)
+	}
 
 	b, err := bot.New(token, passphrase, q, p)
 	if err != nil {
@@ -58,7 +62,7 @@ func main() {
 	if addr == "" {
 		addr = ":7070"
 	}
-	srv := &http.Server{Addr: addr, Handler: web.New(q, p, st).Handler()}
+	srv := &http.Server{Addr: addr, Handler: web.New(q, p, st, b.Link(), passphrase).Handler()}
 	go func() {
 		log.Printf("dashboard on http://localhost%s", port(addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

@@ -63,6 +63,9 @@ func New(token, passphrase string, q *queue.Queue, p *player.Player) (*Bot, erro
 // Username returns the bot's @handle, useful for logging.
 func (b *Bot) Username() string { return b.api.Self.UserName }
 
+// Link returns the bot's public Telegram link, derived from its username.
+func (b *Bot) Link() string { return "https://t.me/" + b.api.Self.UserName }
+
 // Run polls Telegram for updates until the channel closes.
 func (b *Bot) Run() {
 	u := tgbotapi.NewUpdate(0)
@@ -86,7 +89,7 @@ func (b *Bot) isAuthorized(chatID int64) bool {
 func (b *Bot) handle(msg *tgbotapi.Message) {
 	log.Printf("request: chat=%d from=%q text=%q", msg.Chat.ID, userName(msg.From), msg.Text)
 
-	if b.passphrase != "" && !b.isAuthorized(msg.Chat.ID) {
+	if !b.isAuthorized(msg.Chat.ID) {
 		if strings.TrimSpace(msg.Text) == b.passphrase {
 			b.mu.Lock()
 			b.authorized[msg.Chat.ID] = true
