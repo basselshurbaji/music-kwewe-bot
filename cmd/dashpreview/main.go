@@ -11,7 +11,7 @@ import (
 )
 
 const sampleState = `{
-  "now_playing": { "title": "Led Zeppelin - Stairway to Heaven", "added_by": "Ada", "url": "https://www.youtube.com/watch?v=qZTh8DK7jdk" },
+  "now_playing": { "title": "Led Zeppelin - Stairway to Heaven", "added_by": "Ada", "url": "https://www.youtube.com/watch?v=qZTh8DK7jdk", "elapsed": 83, "duration": 482 },
   "queue": [
     { "title": "Queen - Bohemian Rhapsody", "added_by": "Linus", "url": "https://www.youtube.com/watch?v=fJ9rUzIMcZQ" },
     { "title": "Pink Floyd - Comfortably Numb", "added_by": "Grace", "url": "https://www.youtube.com/watch?v=_FrOQC-zEog" },
