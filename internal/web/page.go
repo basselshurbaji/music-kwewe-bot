@@ -210,6 +210,12 @@ const indexHTML = `<!DOCTYPE html>
     var box = el("div", "now");
     box.appendChild(linkOrText(np, "t"));
     if (np.added_by) box.appendChild(el("div", "meta", "added by " + np.added_by));
+    if (np.elapsed || np.duration) {
+      var prog = fmtClock(np.elapsed || 0);
+      if (np.duration) prog += " / " + fmtClock(np.duration);
+      if (np.paused) prog = "⏸ paused — " + prog;
+      box.appendChild(el("div", "meta", prog));
+    }
     nowEl.appendChild(box);
   }
 
@@ -265,6 +271,11 @@ const indexHTML = `<!DOCTYPE html>
   }
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function fmtClock(s) {
+    s = Math.max(0, Math.floor(s));
+    var h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, r = pad(s % 60);
+    return h > 0 ? h + ":" + pad(m) + ":" + r : m + ":" + r;
+  }
   function stamp() {
     var d = new Date();
     return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
@@ -291,7 +302,7 @@ const indexHTML = `<!DOCTYPE html>
   }
 
   refresh();
-  setInterval(refresh, 2000);
+  setInterval(refresh, 1000);
 
   fetch("/api/invite", {cache: "no-store"})
     .then(function(r) { return r.json(); })

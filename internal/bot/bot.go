@@ -125,9 +125,21 @@ func (b *Bot) handleCommand(msg *tgbotapi.Message) {
 		b.reply(msg.Chat.ID, b.renderQueue())
 	case "now", "playing", "now_playing":
 		if cur := b.player.Current(); cur != nil {
-			b.reply(msg.Chat.ID, "▶️ Now playing: "+cur.Label())
+			b.reply(msg.Chat.ID, b.nowLine(cur))
 		} else {
 			b.reply(msg.Chat.ID, "Nothing is playing right now.")
+		}
+	case "pause", "resume", "play":
+		cur := b.player.Current()
+		switch paused, ok := b.player.TogglePause(); {
+		case cur == nil:
+			b.reply(msg.Chat.ID, "Nothing is playing right now.")
+		case !ok:
+			b.reply(msg.Chat.ID, "Playback is still starting — try again in a second.")
+		case paused:
+			b.reply(msg.Chat.ID, "⏸ Paused: "+cur.Label())
+		default:
+			b.reply(msg.Chat.ID, "▶️ Resumed: "+cur.Label())
 		}
 	case "skip", "next":
 		if title, ok := b.player.Skip(); ok {
@@ -216,7 +228,7 @@ func (b *Bot) renderQueue() string {
 
 	var sb strings.Builder
 	if cur != nil {
-		fmt.Fprintf(&sb, "▶️ Now playing: %s\n", cur.Label())
+		sb.WriteString(b.nowLine(cur) + "\n")
 	}
 	if len(items) == 0 {
 		if cur == nil {
@@ -230,6 +242,26 @@ func (b *Bot) renderQueue() string {
 		fmt.Fprintf(&sb, "%d. %s — added by %s\n", i+1, t.Label(), t.AddedBy)
 	}
 	return strings.TrimRight(sb.String(), "\n")
+}
+
+// nowLine renders the current-track status, e.g. "▶️ Now playing: X (1:23 / 3:45)"
+// or "⏸ Paused: X (1:23 / 3:45)".
+func (b *Bot) nowLine(cur *queue.Track) string {
+	prefix := "▶️ Now playing: "
+	if b.player.Paused() {
+		prefix = "⏸ Paused: "
+	}
+	return prefix + cur.Label() + b.progressSuffix()
+}
+
+// progressSuffix renders " (1:23 / 3:45)" for the current track, or "" when
+// idle or the duration is still unknown.
+func (b *Bot) progressSuffix() string {
+	elapsed, duration, ok := b.player.Progress()
+	if !ok || duration <= 0 {
+		return ""
+	}
+	return fmt.Sprintf(" (%s / %s)", player.FormatClock(elapsed), player.FormatClock(duration))
 }
 
 func (b *Bot) reply(chatID int64, text string) {
@@ -246,6 +278,7 @@ Commands:
 /now_playing — show the current track
 /kwewe       — show the queue
 /next        — play the next track
+/pause       — pause or resume playback
 /clear       — empty the queue
 /skip        — skip the current track
 /help        — show this message`

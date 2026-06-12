@@ -13,6 +13,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"music-kwewe/internal/player"
 )
 
 // ── palette ──────────────────────────────────────────────────────────────────
@@ -60,9 +62,12 @@ var (
 // ── API types ─────────────────────────────────────────────────────────────────
 
 type trackView struct {
-	Title   string `json:"title"`
-	AddedBy string `json:"added_by"`
-	URL     string `json:"url"`
+	Title    string `json:"title"`
+	AddedBy  string `json:"added_by"`
+	URL      string `json:"url"`
+	Elapsed  int    `json:"elapsed"`
+	Duration int    `json:"duration"`
+	Paused   bool   `json:"paused"`
 }
 
 type inviteView struct {
@@ -209,6 +214,9 @@ func (m model) View() string {
 		if np.AddedBy != "" {
 			line += "\n" + stDim.Render("added by "+np.AddedBy)
 		}
+		if prog := renderProgress(np.Elapsed, np.Duration, np.Paused); prog != "" {
+			line += "\n" + prog
+		}
 		nowBody = stNowBar.Render(line)
 	}
 	nowSection := stSection.Render(nowHeading + "\n" + nowBody)
@@ -278,6 +286,30 @@ func (m model) View() string {
 	box := stBox.Width(innerWidth + 2).Render(screen)
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, box)
+}
+
+// renderProgress draws "█████░░░░░░░ 1:23 / 3:45" for the current track, or
+// just the elapsed time when the duration is unknown. Empty before the first
+// progress event arrives. Paused tracks get an amber ⏸ marker.
+func renderProgress(elapsed, duration int, paused bool) string {
+	if elapsed == 0 && duration == 0 {
+		return ""
+	}
+	prefix := ""
+	if paused {
+		prefix = stAmber.Render("⏸ ")
+	}
+	clock := player.FormatClock(float64(elapsed))
+	if duration <= 0 {
+		return prefix + stDim.Render(clock)
+	}
+	const width = 12
+	filled := elapsed * width / duration
+	if filled > width {
+		filled = width
+	}
+	bar := stAccent.Render(strings.Repeat("█", filled)) + stDim.Render(strings.Repeat("░", width-filled))
+	return prefix + bar + " " + stDim.Render(clock+" / "+player.FormatClock(float64(duration)))
 }
 
 func renderChart(rows []statView, width int) string {

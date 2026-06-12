@@ -44,6 +44,12 @@ func TestStateJSON(t *testing.T) {
 	if s.Queue[0].Title != "First" || s.Queue[0].AddedBy != "Bassel" {
 		t.Errorf("queue[0] = %+v", s.Queue[0])
 	}
+	// Progress fields belong to the now-playing track only.
+	for _, field := range []string{`"elapsed"`, `"duration"`, `"paused"`} {
+		if strings.Contains(rec.Body.String(), field) {
+			t.Errorf("queue rows carry progress field %s: %s", field, rec.Body.String())
+		}
+	}
 }
 
 func TestIndexHTML(t *testing.T) {

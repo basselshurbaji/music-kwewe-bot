@@ -46,6 +46,11 @@ type trackView struct {
 	Title   string `json:"title"`
 	AddedBy string `json:"added_by"`
 	URL     string `json:"url"`
+	// Elapsed/Duration (whole seconds) and Paused are set only on the
+	// now-playing track.
+	Elapsed  int  `json:"elapsed,omitempty"`
+	Duration int  `json:"duration,omitempty"`
+	Paused   bool `json:"paused,omitempty"`
 }
 
 type stateView struct {
@@ -60,6 +65,11 @@ func (s *Server) state(w http.ResponseWriter, _ *http.Request) {
 	view := stateView{Queue: []trackView{}, Contributors: []stats.Stat{}, Artists: []stats.Stat{}}
 	if cur := s.p.Current(); cur != nil {
 		view.NowPlaying = &trackView{Title: cur.Label(), AddedBy: cur.AddedBy, URL: cur.URL}
+		if elapsed, duration, ok := s.p.Progress(); ok {
+			view.NowPlaying.Elapsed = int(elapsed)
+			view.NowPlaying.Duration = int(duration)
+		}
+		view.NowPlaying.Paused = s.p.Paused()
 	}
 	for _, t := range s.q.List() {
 		view.Queue = append(view.Queue, trackView{Title: t.Label(), AddedBy: t.AddedBy, URL: t.URL})
