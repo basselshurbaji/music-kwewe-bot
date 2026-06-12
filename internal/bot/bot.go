@@ -148,7 +148,18 @@ func (b *Bot) enqueue(msg *tgbotapi.Message, link string) {
 	addedBy := userName(msg.From)
 
 	meta := ytinfo.Lookup(link) // best-effort; empty title falls back to URL
-	t := queue.Track{URL: link, Title: meta.Title, Artist: meta.Artist, AddedBy: addedBy, ChatID: msg.Chat.ID}
+	t := queue.Track{URL: link, ID: meta.ID, Title: meta.Title, Artist: meta.Artist, AddedBy: addedBy, ChatID: msg.Chat.ID}
+
+	if dup, pos, playing := findDuplicate(b.player.Current(), b.q.List(), t); dup != nil {
+		log.Printf("queue: skipped duplicate %q (by %s)", dup.Label(), addedBy)
+		if playing {
+			b.reply(msg.Chat.ID, "▶️ Already playing: "+dup.Label())
+		} else {
+			b.reply(msg.Chat.ID, fmt.Sprintf("🔁 Already in queue (#%d): %s", pos+1, dup.Label()))
+		}
+		return
+	}
+
 	b.q.Add(t)
 
 	ahead := b.q.Len() - 1
@@ -157,6 +168,31 @@ func (b *Bot) enqueue(msg *tgbotapi.Message, link string) {
 	// The player announces "Now playing" when a track actually starts, so we
 	// just confirm the enqueue here. Len() is the pending count after adding.
 	b.reply(msg.Chat.ID, fmt.Sprintf("➕ Queued (%d ahead): %s", ahead, t.Label()))
+}
+
+// findDuplicate reports whether t already exists as cur (now playing) or in
+// items. pos is the queue index of the duplicate; playing is true when the
+// match is the current track.
+func findDuplicate(cur *queue.Track, items []queue.Track, t queue.Track) (dup *queue.Track, pos int, playing bool) {
+	if cur != nil && sameTrack(*cur, t) {
+		return cur, 0, true
+	}
+	for i := range items {
+		if sameTrack(items[i], t) {
+			return &items[i], i, false
+		}
+	}
+	return nil, 0, false
+}
+
+// sameTrack reports whether a and b refer to the same video, matching on the
+// canonical video ID when both sides have one and falling back to the exact
+// URL when metadata resolution failed.
+func sameTrack(a, b queue.Track) bool {
+	if a.ID != "" && b.ID != "" {
+		return a.ID == b.ID
+	}
+	return a.URL == b.URL
 }
 
 // userName returns a display name for a Telegram user, preferring their full

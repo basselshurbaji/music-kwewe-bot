@@ -6,6 +6,7 @@ import "sync"
 // Track is a single queued item.
 type Track struct {
 	URL     string
+	ID      string // canonical YouTube video ID, best-effort (for duplicate detection)
 	Title   string
 	Artist  string // uploading channel / artist, best-effort (for session stats)
 	AddedBy string // Telegram display name of whoever queued it
