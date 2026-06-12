@@ -16,7 +16,7 @@ func newServer() *Server {
 	q := queue.New()
 	q.Add(queue.Track{URL: "https://www.youtube.com/watch?v=aaaaaaaaaaa", Title: "First", AddedBy: "Bassel"})
 	q.Add(queue.Track{URL: "https://www.youtube.com/watch?v=bbbbbbbbbbb", Title: "Second", AddedBy: "Sam"})
-	return New(q, player.New(q), stats.New())
+	return New(q, player.New(q), stats.New(), "", "")
 }
 
 func TestStateJSON(t *testing.T) {
